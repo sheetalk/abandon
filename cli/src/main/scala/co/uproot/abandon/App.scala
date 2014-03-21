@@ -110,17 +110,22 @@ object AbandonApp extends App {
   }
 
   try {
+    
     val settingsResult = SettingsHelper.getCompleteSettings(args)
+    
     settingsResult match {
       case Left(errorMsg) => println("Error:", errorMsg)
       case Right(settings) =>
 
         val (parseError, astEntries, processedFiles) = Processor.parseAll(settings.inputs)
+        
+   
         if (!parseError) {
           val appState = Processor.process(astEntries)
           Processor.checkConstaints(appState, settings.eodConstraints)
           settings.exports.foreach { exportSettings =>
             val reportWriter = new ReportWriter(settings, exportSettings.outFiles)
+            
             val xmlData = Reports.xmlExport(appState, exportSettings)
             reportWriter.printXml(xmlData)
             reportWriter.close
@@ -173,5 +178,5 @@ object AbandonApp extends App {
   def printErr(msg:String) = {
     println(Console.RED + Console.BOLD + msg + Console.RESET)
     
-  }
-}
+  } 
+} 
