@@ -55,8 +55,7 @@ class AbandonLexer extends StdLexical with ImplicitConversions {
     case i ~ f ~ e =>
       i + optString(".", f) + optString("", e)
   }
-  def intPart =  intList
-  def intList = (nonzero ~ ((comma ~> rep1sep(digit, comma?)) | repsep(digit, comma?)))  ^^ { case x ~ y => (x :: y) mkString "" }
+  def intPart =  (nonzero ~ ((comma ~> rep1sep(digit, comma?)) | repsep(digit, comma?)))  ^^ { case x ~ y => (x :: y) mkString "" }
   def fracPart = '.' ~> rep(digit) ^^ { _ mkString "" }
   def expPart = exponent ~ opt(sign) ~ rep1(digit) ^^ {
     case e ~ s ~ d =>
