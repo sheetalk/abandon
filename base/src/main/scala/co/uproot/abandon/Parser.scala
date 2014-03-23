@@ -51,11 +51,10 @@ class AbandonLexer extends StdLexical with ImplicitConversions {
   override def whitespaceChar = elem("space char", ch => ch <= ' ' && ch != '\n' && ch != EofCh)
   override def whitespace = rep(whitespaceChar)
 
-  def number = intPart ~ opt(fracPart) ~ opt(expPart) ^^ {
+  def number = intList ~ opt(fracPart) ~ opt(expPart) ^^ {
     case i ~ f ~ e =>
       i + optString(".", f) + optString("", e)
   }
-  def intPart = (zero*) ~> intList
   def intList = (nonzero ~ ((comma ~> rep1sep(digit, comma?)) | repsep(digit, comma?)))  ^^ { case x ~ y => (x :: y) mkString "" }
   def fracPart = '.' ~> rep(digit) ^^ { _ mkString "" }
   def expPart = exponent ~ opt(sign) ~ rep1(digit) ^^ {
@@ -69,8 +68,8 @@ class AbandonLexer extends StdLexical with ImplicitConversions {
   }
 
   def comma: Parser[String] = ',' ^^^ ","
-  def zero: Parser[String] = '0' ^^^ "0"
-  def nonzero = elem("nonzero digit", d => d.isDigit && d != '0')
+  // def zero: Parser[String] = '0' ^^^ "0"
+  def nonzero = elem("nonzero digit", d => d.isDigit)
   def exponent = elem("exponent character", d => d == 'e' || d == 'E')
   def sign = elem("sign character", d => d == '-' || d == '+')
 
