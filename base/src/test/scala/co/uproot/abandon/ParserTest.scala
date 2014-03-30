@@ -46,7 +46,7 @@ class ParserTest extends FlatSpec with Matchers with Inside {
                     acc1 should be (expenseAccount)
                     acc2 should be (cashAccount)
                     expr1 should be (Some(NumericLiteralExpr(200)))
-                    expr2 should be (Some(NumericLiteralExpr(-200)))
+                    expr2 should be (Some(UnaryNegExpr(NumericLiteralExpr(200))))
                 }
             }
         }
@@ -75,8 +75,8 @@ class ParserTest extends FlatSpec with Matchers with Inside {
                     acc2 should be (cashAccount)
                     acc3 should be (bankAccount)
                     expr1 should be (Some(NumericLiteralExpr(200)))
-                    expr2 should be (Some(NumericLiteralExpr(-100)))
-                    expr3 should be (Some(NumericLiteralExpr(-100)))
+                    expr2 should be (Some(UnaryNegExpr(NumericLiteralExpr(100))))
+                    expr3 should be (Some(UnaryNegExpr(NumericLiteralExpr(100))))
                 }
             }
         }
@@ -110,7 +110,7 @@ class ParserTest extends FlatSpec with Matchers with Inside {
                     acc2 should be (cashAccount)
                     acc3 should be (bankAccount)
                     expr1 should be (Some(NumericLiteralExpr(200)))
-                    expr2 should be (Some(NumericLiteralExpr(-100)))
+                    expr2 should be (Some(UnaryNegExpr(NumericLiteralExpr(100))))
                     expr3 should be (None)
                 }
             }
