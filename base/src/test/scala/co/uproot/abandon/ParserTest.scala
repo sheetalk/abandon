@@ -159,5 +159,4 @@ class ParserTest extends FlatSpec with Matchers with Inside {
     }
   }
 
-
 }
