@@ -46,7 +46,7 @@ class ParserTest extends FlatSpec with Matchers with Inside {
                     acc1 should be (expenseAccount)
                     acc2 should be (cashAccount)
                     expr1 should be (Some(NumericLiteralExpr(200)))
-                    expr2 should be (Some(NumericLiteralExpr(-200)))
+                    expr2 should be (Some(UnaryNegExpr(NumericLiteralExpr(200))))
                 }
             }
         }
@@ -75,8 +75,8 @@ class ParserTest extends FlatSpec with Matchers with Inside {
                     acc2 should be (cashAccount)
                     acc3 should be (bankAccount)
                     expr1 should be (Some(NumericLiteralExpr(200)))
-                    expr2 should be (Some(NumericLiteralExpr(-100)))
-                    expr3 should be (Some(NumericLiteralExpr(-100)))
+                    expr2 should be (Some(UnaryNegExpr(NumericLiteralExpr(100))))
+                    expr3 should be (Some(UnaryNegExpr(NumericLiteralExpr(100))))
                 }
             }
         }
@@ -110,7 +110,7 @@ class ParserTest extends FlatSpec with Matchers with Inside {
                     acc2 should be (cashAccount)
                     acc3 should be (bankAccount)
                     expr1 should be (Some(NumericLiteralExpr(200)))
-                    expr2 should be (Some(NumericLiteralExpr(-100)))
+                    expr2 should be (Some(UnaryNegExpr(NumericLiteralExpr(100))))
                     expr3 should be (None)
                 }
             }
@@ -158,6 +158,64 @@ class ParserTest extends FlatSpec with Matchers with Inside {
         }
     }
   }
+  
+  "parser" should "parse a transaction with zero value" in {
+    val testInput = """
+    2013/1/1
+      Expense       200
+      Cash          000
+    """
+    val parseResult = AbandonParser.abandon(scanner(testInput))
+
+    inside(parseResult) {
+      case AbandonParser.Success(result, _) =>
+        inside(result) {
+          case List(txnGroup) =>
+            inside(txnGroup) {
+              case Transaction(date, txns, None, None, Nil) =>
+                date should be(Date(2013, 1, 1))
+                inside(txns) {
+                  case List(SingleTransaction(acc1, expr1, _), SingleTransaction(acc2, expr2, _)) =>
+                    acc1 should be (expenseAccount)
+                    acc2 should be (cashAccount)
+                    expr1 should be (Some(NumericLiteralExpr(200)))
+                    expr2 should be (Some(NumericLiteralExpr(0)))
+                }
+            }
+        }
+    }
+  }
+
+  
+  
+  "parser" should "parse a simple subtraction expression" in {
+    val testInput = """
+    2013/1/1
+      Expense       200-4
+      Cash
+    """
+    val parseResult = AbandonParser.abandon(scanner(testInput))
+
+    inside(parseResult) {
+      case AbandonParser.Success(result, _) =>
+        inside(result) {
+          case List(txnGroup) =>
+            inside(txnGroup) {
+              case Transaction(date, txns, None, None, Nil) =>
+                date should be(Date(2013, 1, 1))
+                inside(txns) {
+                  case List(SingleTransaction(acc1, expr1, _), SingleTransaction(acc2, expr2, _)) =>
+                    acc1 should be (expenseAccount)
+                    acc2 should be (cashAccount)
+                    expr1 should be (Some(SubExpr(NumericLiteralExpr(200),NumericLiteralExpr(4))))
+                    expr2 should be (None)
+                }
+            }
+        }
+    }
+  }
+
+
 
 
 }
