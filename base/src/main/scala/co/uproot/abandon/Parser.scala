@@ -13,11 +13,11 @@ class AbandonLexer extends StdLexical with ImplicitConversions {
   import scala.util.parsing.input.CharArrayReader.EofCh
   override def token: Parser[Token] =
     //( '\"' ~ rep(charSeq | letter) ~ '\"' ^^ lift(StringLit)
+    
     (string ^^ StringLit
       | identChar ~ rep(identChar | digit) ^^ { case first ~ rest => processIdent(first :: rest mkString "") }
       | number ~ letter ^^ { case n ~ l => ErrorToken("Invalid number format : " + n + l) }
-      | '-' ~> number ^^ { case num => NumericLit("-" + num) }
-      | number ^^ NumericLit
+      |  number ^^ NumericLit   
       | eol ^^^ EOL
       | comment ^^ { case commentContents => CommentToken(commentContents.toString)}
       | EofCh ^^^ EOF
@@ -25,8 +25,10 @@ class AbandonLexer extends StdLexical with ImplicitConversions {
       | '\"' ~> failure("Unterminated string")
       | rep(letter) ^^ checkKeyword
       | failure("Illegal character")
+      
     )
-
+  
+    
   case object EOL extends Token {
     def chars = "<eol>"
   }
@@ -50,17 +52,19 @@ class AbandonLexer extends StdLexical with ImplicitConversions {
 
   override def whitespaceChar = elem("space char", ch => ch <= ' ' && ch != '\n' && ch != EofCh)
   override def whitespace = rep(whitespaceChar)
-
-  def number = intList ~ opt(fracPart) ~ opt(expPart) ^^ {
+ 
+  
+  def number = intPart ~ opt(fracPart) ~ opt(expPart) ^^ {
     case i ~ f ~ e =>
-      i + optString(".", f) + optString("", e)
+     i + optString(".", f) + optString("", e)
   }
-  def intList = (nonzero ~ ((comma ~> rep1sep(digit, comma?)) | repsep(digit, comma?)))  ^^ { case x ~ y => (x :: y) mkString "" }
+ def intPart = (nonzero ~ ((comma ~> rep1sep(digit, comma?)) | repsep(digit, comma?)))  ^^ { case x ~ y => (x :: y) mkString "" } | zero
   def fracPart = '.' ~> rep(digit) ^^ { _ mkString "" }
   def expPart = exponent ~ opt(sign) ~ rep1(digit) ^^ {
     case e ~ s ~ d =>
       e + optString("", s) + d.mkString("")
   }
+  
 
   private def optString[A](pre: String, a: Option[A]) = a match {
     case Some(x) => pre + x.toString
@@ -68,7 +72,7 @@ class AbandonLexer extends StdLexical with ImplicitConversions {
   }
 
   def comma: Parser[String] = ',' ^^^ ","
-  // def zero: Parser[String] = '0' ^^^ "0"
+  def zero: Parser[String] = '0' ^^^ "0"
   def nonzero = elem("nonzero digit", d => d.isDigit)
   def exponent = elem("exponent character", d => d == 'e' || d == 'E')
   def sign = elem("sign character", d => d == '-' || d == '+')
@@ -95,6 +99,7 @@ class AbandonLexer extends StdLexical with ImplicitConversions {
 }
 
 object AbandonParser extends StandardTokenParsers with PackratParsers {
+	
   override val lexical = new AbandonLexer
   private val defKeyword = "def"
   private val accountKeyword = "account"
@@ -113,7 +118,9 @@ object AbandonParser extends StandardTokenParsers with PackratParsers {
   lexical.delimiters ++= List("+", "-", "*", "/", "=", "(", ")", ":", ",", "&", ".")
 
   private lazy val integer = numericLit ^^ { case x => x.toInt }
-  private lazy val number:PackratParser[BigDecimal] = accept("number", { case lexical.NumericLit(n) => BigDecimal(n) })
+ 
+ private lazy val number:PackratParser[BigDecimal] = accept("number", { case lexical.NumericLit(n) =>  BigDecimal(n) })
+ 
   private lazy val eol = accept("<eol>", { case lexical.EOL => })
   private lazy val comment = accept("<comment>", { case lexical.CommentToken(c) => c})
   private lazy val anyEol = ((comment?) ~ eol)
@@ -176,14 +183,17 @@ object AbandonParser extends StandardTokenParsers with PackratParsers {
 
   private lazy val txFrag = ((dateFrag ~ (annotation?) ~ (payee?)) <~ eol) ~ (eolComment*) ~ (txDetails+) ^^ {
     case date ~ annotationOpt ~ optPayee ~ optComment ~ transactions =>
+    
       val annotationStrOpt = annotationOpt.map(_.mkString(""))
       Transaction(date, transactions, annotationStrOpt, optPayee, optComment.flatten)
   }
+  
   private lazy val annotation = (("(" ~> (ident|numericLit)+) <~ ")")
   private lazy val payee = ((allButEOL)+) ^^ {case x => x.mkString(" ")}
   private lazy val txDetails:PackratParser[SingleTransaction] = (accountName ~ opt(numericExpr) ~ eolComment) ^^ {
-    case name ~ amount ~ commentOpt => SingleTransaction(name, amount, commentOpt)
-  }
+    case name ~ amount ~ commentOpt  => SingleTransaction(name, amount, commentOpt)
+   }
+
   private lazy val accountName = rep1sep(ident, ":") ^^ { case path => AccountName(path) }
 
   private lazy val dateFrag = ((((integer <~ "/") ~ (integer | ident)) <~ "/") ~ integer) ^? ({
