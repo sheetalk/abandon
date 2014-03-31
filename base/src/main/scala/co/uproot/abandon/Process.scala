@@ -21,6 +21,8 @@ class TxnGroup(
   }
 }
 case class DetailedTransaction(name: AccountName, delta: BigDecimal, commentOpt: Option[String], parentOpt: Option[TxnGroup] = None) {
+   
+  
   def date = parentOpt.get.date
   var resultAmount = Zero
 }
@@ -30,7 +32,7 @@ class AccountState {
   private var _amounts = Map[AccountName, BigDecimal]() // initAmounts
   private var _txns = Seq[DetailedTransaction]() // initTxns
   private var _txnGroups = Seq[TxnGroup]() // initTxns
-
+     
   def amounts = _amounts
   def txns = _txns
   def txnGroups = _txnGroups
@@ -74,6 +76,7 @@ class AccountState {
 }
 
 case class AccountTreeState(name: AccountName, amount: BigDecimal, childStates: Seq[AccountTreeState]) {
+  
   assert(amount != null)
   assert(childStates != null)
   lazy val total: BigDecimal = amount + childStates.foldLeft(Zero)(_ + _.total)
@@ -105,6 +108,7 @@ object Processor {
       if (!processedFiles.contains(input)) {
         processedFiles :+= input
         println("Processing:" + input)
+        
         val source = getSource(input)
 
         /*
@@ -166,6 +170,7 @@ object Processor {
   }
 
   def process(entries: Seq[ASTEntry]) = {
+    
     val definitions = filterByType[Definition[BigDecimal]](entries)
     val evaluationContext = new EvaluationContext[BigDecimal](definitions, Nil, new NumericLiteralExpr(_))
 
@@ -173,7 +178,9 @@ object Processor {
     val sortedTxns = transactions.sortBy(_.date)(DateOrdering)
     val accState = new AccountState()
     sortedTxns foreach { tx =>
+    	
       val (txWithAmount, txNoAmount) = tx.transactions.partition(t => t.amount.isDefined)
+      
       assert(txNoAmount.length <= 1, "More than one account with unspecified amount: " + txNoAmount)
       var txTotal = Zero
       var detailedTxns = Seq[DetailedTransaction]()
@@ -181,13 +188,15 @@ object Processor {
         val delta = t.amount.get.evaluate(evaluationContext)
         txTotal += delta
         detailedTxns :+= DetailedTransaction(t.accName, delta, t.commentOpt)
-      }
+        }
       txNoAmount foreach { t =>
         val delta = -txTotal
         txTotal += delta
         detailedTxns :+= DetailedTransaction(t.accName, delta, t.commentOpt)
+        
       }
       accState.updateAmounts(new TxnGroup(detailedTxns, tx.date, tx.annotationOpt, tx.payeeOpt, tx.comments))
+      
       assert(txTotal equals Zero, s"Transactions do not balance. Unbalance amount: $txTotal")
     }
     val accountDeclarations = filterByType[AccountDeclaration](entries)
@@ -196,6 +205,7 @@ object Processor {
 
   def checkConstaints(appState: AppState, constraints: Seq[Constraint]) = {
     constraints.foreach{c => c.check(appState)}
+    
   }
-
+  
 }

@@ -53,6 +53,8 @@ case class AccountName(fullPath:Seq[String]) {
   val depth = fullPath.length
 }
 
+//case class SingleTransaction(accName:AccountName, amount:Option[NumericExpr], commentOpt:Option[String], a:String)
+
 case class SingleTransaction(accName:AccountName, amount:Option[NumericExpr], commentOpt:Option[String])
 
 sealed class ASTEntry
@@ -67,6 +69,8 @@ case class Transaction(date:Date, transactions:Seq[SingleTransaction], annotatio
 case class Definition[T](name:String, params:List[String], rhs:Expr[T]) extends ASTTangibleEntry {
   def prettyPrint = "def %s(%s) = %s" format (name, params.mkString(", "), rhs.prettyPrint)
 }
+
+
 
 case class AccountDeclaration(name:AccountName, details:Map[String, Expr[_]]) extends ASTTangibleEntry
 
@@ -95,6 +99,7 @@ case class NumericLiteralExpr(val value:BigDecimal) extends NumericExpr with Lit
   override def prettyPrint = value.toString
 }
 
+
 case class FunctionExpr[T](val name:String, val arguments:Seq[Expr[T]]) extends Expr[T] {
   def evaluate(context:EvaluationContext[T]): T = context.getValue(name, arguments.map(_.evaluate(context)))
   override def prettyPrint = "%s(%s)" format (name, arguments.map(_.prettyPrint).mkString(", "))
@@ -108,10 +113,14 @@ case class IdentifierExpr[T](val name:String) extends Expr[T] {
 }
 
 abstract class BinaryNumericExpr(op1:NumericExpr, op2:NumericExpr, opChar:String, operation:(BigDecimal, BigDecimal)=>BigDecimal) extends NumericExpr {
+  
   def evaluate(context:EvaluationContext[BigDecimal]): BigDecimal = operation(op1.evaluate(context), op2.evaluate(context))
   override def prettyPrint = op1.prettyPrint + " "+opChar+" " + op2.prettyPrint
   def getRefs = op1.getRefs ++ op2.getRefs
 }
+
+
+
 
 case class AddExpr(val op1: NumericExpr, val op2: NumericExpr) extends BinaryNumericExpr(op1, op2, "+", _ + _)
 
@@ -120,6 +129,7 @@ case class SubExpr(val op1: NumericExpr, val op2: NumericExpr) extends BinaryNum
 case class MulExpr(val op1: NumericExpr, val op2: NumericExpr) extends BinaryNumericExpr(op1, op2, "*", _ * _)
 
 case class DivExpr(val op1: NumericExpr, val op2: NumericExpr) extends BinaryNumericExpr(op1, op2, "/", _ / _)
+
 
 case class UnaryNegExpr(val op: NumericExpr) extends NumericExpr {
   def evaluate(context:EvaluationContext[BigDecimal]): BigDecimal = -op.evaluate(context)

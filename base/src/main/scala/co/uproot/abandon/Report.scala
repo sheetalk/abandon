@@ -9,6 +9,7 @@ case class RegisterReportGroup(groupTitle: String, entries: Seq[RegisterReportEn
 object Reports {
 
   def balanceReport(state: AppState, settings: Settings, reportSettings: BalanceReportSettings) = {
+   
     def show(width: Int, a: AccountTreeState, maxNameLength: Int, treePrefix: String = "", isLastChild: Boolean = false, isParentLastChild: Boolean = false, prefix: Option[String] = None, forceIndent: Option[Int] = None): Seq[BalanceReportEntry] = {
       val indent = forceIndent.getOrElse(a.name.depth)
       val amountIsZero = a.amount equals Zero
