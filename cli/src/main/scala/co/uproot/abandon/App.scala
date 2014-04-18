@@ -75,6 +75,14 @@ object AbandonApp extends App {
     }
   }
 
+  def printLedgerReport(reportWriter: ReportWriter, ledgerRep: Seq[LedgerExportData]) = {
+    ledgerRep foreach { reportGroup =>
+      reportWriter.println(reportGroup.date)
+      reportGroup.ledgerEntry foreach { e =>
+        reportWriter.println("   " + e.render)
+      }
+    }
+  }
   def printBookReport(reportWriter: ReportWriter, bookReportSettings: BookReportSettings, bookReport: Seq[RegisterReportGroup]) = {
     val txnIndent = " " * 49
 
@@ -117,18 +125,8 @@ object AbandonApp extends App {
             val reportWriter = new ReportWriter(settings, exportSettings.outFiles)
             exportSettings match {
               case balSettings: LedgerExportSettings =>
-                val (date1, entry) = Reports.ledgerExport(appState, settings, balSettings)
-                if(!entry.isEmpty) {
-                  reportWriter.println(date1 + "\n")
-                  val balRender = entry.map { e => e.accName match {
-                    case Some(x) => "\t %s" format (e.render)
-                    case None => ""
-                  }
-                 }
-                 reportWriter.println(balRender.mkString("\n"))
-                } else {
-                    reportWriter.println()
-                }
+                val ledgerRep = Reports.ledgerExport(appState, settings, balSettings)
+                printLedgerReport(reportWriter, ledgerRep)
               case xmlSettings : XmlExportSettings =>
               val xmlData = Reports.xmlExport(appState, exportSettings)
               reportWriter.printXml(xmlData)

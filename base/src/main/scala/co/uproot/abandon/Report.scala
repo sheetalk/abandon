@@ -6,6 +6,7 @@ case class BalanceReportEntry(accName: Option[AccountName], render: String)
 case class LedgerExportEntry(accName: Option[AccountName], render: String)
 case class RegisterReportEntry(txns: Seq[DetailedTransaction], render: String)
 case class RegisterReportGroup(groupTitle: String, entries: Seq[RegisterReportEntry])
+case class LedgerExportData(date: String,ledgerEntry: Seq[LedgerExportEntry])
 
 object Reports {
 
@@ -161,15 +162,13 @@ object Reports {
     }
     reportGroups
   }
-  def ledgerExport(state: AppState, settings: Settings, reportSettings: LedgerExportSettings) = {
+  def ledgerExport(state: AppState, settings: Settings, reportSettings: LedgerExportSettings) : Seq[LedgerExportData] = {
+    var reportGroups = Seq[LedgerExportData]()
     val sortedGroup = state.accState.txnGroups.sortBy(_.date.toInt)
-    val date = sortedGroup.lastOption.map{ latestDate =>
-      latestDate.date.formatYYYYMMDD
-    }
-    val currDate1 = date match {
-      case Some(x) => x
-      case None => ""
-    }
+    if (sortedGroup.isEmpty){
+      Nil
+    } else {
+    val latestDate = sortedGroup(sortedGroup.length - 1).date.formatYYYYMMDD
     val accAmounts = state.accState.amounts
     lazy val Accs = accAmounts.map {
       case (accountName, amount) =>
@@ -177,7 +176,12 @@ object Reports {
         LedgerExportEntry(Some(accountName), render)
     }
     val sortedGroups = Accs.toSeq.sortBy(_.accName.toString)
-    ("%s" format currDate1, sortedGroups)
+    reportGroups :+= LedgerExportData(
+          latestDate,
+          sortedGroups
+      )
+    }
+    reportGroups
   }
   def xmlExport(state: AppState, exportSettings: ExportSettings): xml.Node = {
     <abandon><transactions>{
