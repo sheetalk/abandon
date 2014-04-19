@@ -170,9 +170,11 @@ object Reports {
     } else {
     val latestDate = sortedGroup(sortedGroup.length - 1).date.formatYYYYMMDD
     val accAmounts = state.accState.amounts
+    val MaxNameLength = maxElseZero(accAmounts.map(_._1.toString.length)) + 4
+    val MaxAmountWidth = maxElseZero(accAmounts.map(_._2.toBigInt.toString.length))
     lazy val Accs = accAmounts.map {
       case (accountName, amount) =>
-        val render = "%-50s %10.2f" format (accountName, amount)
+        val render = "%-" + MaxNameLength +"s %" + MaxAmountWidth +".2f" format (accountName, amount)
         LedgerExportEntry(Some(accountName), render)
     }
     val sortedGroups = Accs.toSeq.sortBy(_.accName.toString)
