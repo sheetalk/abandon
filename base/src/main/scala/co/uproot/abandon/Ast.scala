@@ -6,7 +6,9 @@ object ASTHelper {
 
 class InputError(msg: String) extends RuntimeException(msg)
 class ConstraintError(msg: String) extends RuntimeException(msg)
+
 import ASTHelper._
+
 object Date {
   val yearMultiplier = 10000
   val monthMultiplier = 100
