@@ -178,7 +178,7 @@ object Reports {
     } else {
       val latestDate = sortedGroup.last.date
       val accAmounts = state.accState.amounts
-      val amounts = 
+      val amounts =
         if(reportSettings.showZeroAmountAccounts) {
           accAmounts
         } else {
