@@ -63,6 +63,8 @@ object SettingsHelper {
         val isRight = reportOptions.map(_.optStringList("isRight")).flatten.getOrElse(Nil)
         val exportConfigs = config.optConfigList("exports").getOrElse(Nil)
         val exports = exportConfigs.map(makeExportSettings)
+        val aliasConfigs = config.optConfigList("accounts").getOrElse(Nil)
+        val alias = aliasConfigs.map(makeAliasSettings)
         val eodConstraints = config.optConfigList("eodConstraints").getOrElse(Nil).map(makeEodConstraints(_))
         Right(Settings(inputs, eodConstraints, reports, ReportOptions(isRight), exports, Some(file)))
       } catch {
@@ -125,6 +127,13 @@ object SettingsHelper {
     val sources = config.getStringList("sources").asScala
     val destination = config.getString("destination")
     ClosureExportSettings(sources, destination)
+  }
+
+  def makeAliasSettings(config: Config) = {
+    val name = config.getString("name")
+    val alias = config.getString("alias")
+    println(name,alias)
+    AliasSettings(name, alias)
   }
 }
 
@@ -192,6 +201,11 @@ abstract class ExportSettings(val accountMatch: Option[Seq[String]], val outFile
 case class ClosureExportSettings(
   sources: Seq[String],
   destination: String) {
+}
+
+case class AliasSettings(
+  accName: String,
+  alias: String) {
 }
 
 case class LedgerExportSettings(
